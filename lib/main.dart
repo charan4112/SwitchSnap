@@ -39,6 +39,37 @@ class _CounterScreenState extends State<CounterScreen> {
     });
   }
 
+  // Function to reset counter & image with a confirmation dialog
+  void _resetCounterAndImage() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Reset Confirmation"),
+          content: Text("Are you sure you want to reset everything?"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+            ),
+            ElevatedButton(
+              child: Text("Reset"),
+              onPressed: () {
+                setState(() {
+                  _counter = 0;
+                  _showFirstImage = true; // Reset image
+                });
+                Navigator.of(context).pop(); // Close dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,6 +114,18 @@ class _CounterScreenState extends State<CounterScreen> {
           ElevatedButton(
             onPressed: _toggleImage,
             child: Text("Toggle Image"),
+          ),
+
+          SizedBox(height: 20),
+
+          // Reset Button
+          ElevatedButton(
+            onPressed: _resetCounterAndImage,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red, // Make reset button distinct
+              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+            ),
+            child: Text("Reset", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
