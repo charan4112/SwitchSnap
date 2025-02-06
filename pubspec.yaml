@@ -1,0 +1,25 @@
+name: switch_snap
+description: "A Flutter app for counter and image toggle."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Dependencies for animations (Optional, if needed)
+  flutter_animate: ^4.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/image1.jpg
+    - assets/image2.jpg
