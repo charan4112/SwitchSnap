@@ -1,47 +1,44 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(SwitchSnapApp());
 }
 
-class MyApp extends StatelessWidget {
+class SwitchSnapApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SwitchSnap',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: CounterScreen(),
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: HomeScreen(),
     );
   }
 }
 
-class CounterScreen extends StatefulWidget {
+class HomeScreen extends StatefulWidget {
   @override
-  _CounterScreenState createState() => _CounterScreenState();
+  _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _CounterScreenState extends State<CounterScreen>
+class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   int _counter = 0;
-  bool _showFirstImage = true; // Boolean to track image state
+  bool _showFirstImage = true;
   late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: Duration(milliseconds: 200),
+      duration: Duration(milliseconds: 500),
       vsync: this,
-      lowerBound: 0.8,
-      upperBound: 1.2,
     );
-
-    _scaleAnimation =
-        CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -50,132 +47,114 @@ class _CounterScreenState extends State<CounterScreen>
     super.dispose();
   }
 
+  // Increment Counter
   void _incrementCounter() {
     setState(() {
       _counter++;
     });
-    _controller.forward().then((_) => _controller.reverse()); // Scale effect
   }
 
+  // Toggle Image with Animation
   void _toggleImage() {
+    _controller.forward(from: 0);
     setState(() {
-      _showFirstImage = !_showFirstImage; // Toggle between images
+      _showFirstImage = !_showFirstImage;
     });
   }
 
-  // Function to reset counter & image with a confirmation dialog
-  void _resetCounterAndImage() {
+  // Reset Function
+  void _reset() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Reset Confirmation"),
-          content: Text("Are you sure you want to reset everything?"),
-          actions: <Widget>[
-            TextButton(
-              child: Text("Cancel"),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-            ),
-            ElevatedButton(
-              child: Text("Reset"),
-              onPressed: () {
-                setState(() {
-                  _counter = 0;
-                  _showFirstImage = true; // Reset image
-                });
-                Navigator.of(context).pop(); // Close dialog
-              },
-            ),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: Text("Confirm Reset"),
+        content: Text("Are you sure you want to reset the counter and image?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _counter = 0;
+                _showFirstImage = true;
+              });
+              Navigator.pop(context);
+            },
+            child: Text("Reset"),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('SwitchSnap App'),
-        backgroundColor: Colors.blueAccent,
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            'You have pushed the button this many times:',
-            style: TextStyle(fontSize: 16),
-          ),
-          SizedBox(height: 10),
-
-          // Animated Counter
-          ScaleTransition(
-            scale: _scaleAnimation,
-            child: Text(
-              '$_counter',
-              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+      appBar: AppBar(title: Text('SwitchSnap App')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Counter Display
+            Text(
+              "You have pushed the button this many times:",
+              style: TextStyle(fontSize: 18),
             ),
-          ),
-          SizedBox(height: 20),
+            Text(
+              '$_counter',
+              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
 
-          // Animated Image Toggle
-          AnimatedSwitcher(
-            duration: Duration(milliseconds: 500),
-            transitionBuilder: (widget, animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: widget,
-              );
-            },
-            child: Container(
-              key: ValueKey<bool>(_showFirstImage),
-              height: 200,
-              width: 200,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage(
-                    _showFirstImage ? 'assets/image1.jpg' : 'assets/image2.jpg',
+            // Animated Image Toggle
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: Container(
+                key: ValueKey<bool>(_showFirstImage),
+                height: 200,
+                width: 200,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(
+                      _showFirstImage
+                          ? 'assets/image1.jpg'
+                          : 'assets/image2.jpg',
+                    ),
+                    fit: BoxFit.cover,
                   ),
-                  fit: BoxFit.cover,
                 ),
               ),
             ),
-          ),
+            SizedBox(height: 20),
 
-          SizedBox(height: 20),
-
-          // Toggle Image Button
-          ElevatedButton.icon(
-            onPressed: _toggleImage,
-            icon: Icon(Icons.image),
-            label: Text("Toggle Image"),
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              backgroundColor: Colors.orangeAccent,
+            // Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FloatingActionButton(
+                  onPressed: _incrementCounter,
+                  tooltip: 'Increment',
+                  child: Icon(Icons.add),
+                ),
+                SizedBox(width: 20),
+                FloatingActionButton(
+                  onPressed: _toggleImage,
+                  tooltip: 'Toggle Image',
+                  child: Icon(Icons.image),
+                ),
+                SizedBox(width: 20),
+                FloatingActionButton(
+                  onPressed: _reset,
+                  tooltip: 'Reset',
+                  backgroundColor: Colors.red,
+                  child: Icon(Icons.refresh),
+                ),
+              ],
             ),
-          ),
-
-          SizedBox(height: 20),
-
-          // Reset Button
-          ElevatedButton.icon(
-            onPressed: _resetCounterAndImage,
-            icon: Icon(Icons.refresh),
-            label: Text("Reset"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        backgroundColor: Colors.green,
-        child: Icon(Icons.add),
+          ],
+        ),
       ),
     );
   }
