@@ -9,7 +9,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'SwitchSnap',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -23,14 +23,38 @@ class CounterScreen extends StatefulWidget {
   _CounterScreenState createState() => _CounterScreenState();
 }
 
-class _CounterScreenState extends State<CounterScreen> {
+class _CounterScreenState extends State<CounterScreen>
+    with SingleTickerProviderStateMixin {
   int _counter = 0;
   bool _showFirstImage = true; // Boolean to track image state
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(milliseconds: 200),
+      vsync: this,
+      lowerBound: 0.8,
+      upperBound: 1.2,
+    );
+
+    _scaleAnimation =
+        CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   void _incrementCounter() {
     setState(() {
       _counter++;
     });
+    _controller.forward().then((_) => _controller.reverse()); // Scale effect
   }
 
   void _toggleImage() {
@@ -74,7 +98,8 @@ class _CounterScreenState extends State<CounterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Flutter Demo Home Page'),
+        title: Text('SwitchSnap App'),
+        backgroundColor: Colors.blueAccent,
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -84,17 +109,28 @@ class _CounterScreenState extends State<CounterScreen> {
             style: TextStyle(fontSize: 16),
           ),
           SizedBox(height: 10),
-          Text(
-            '$_counter',
-            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+
+          // Animated Counter
+          ScaleTransition(
+            scale: _scaleAnimation,
+            child: Text(
+              '$_counter',
+              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+            ),
           ),
           SizedBox(height: 20),
 
           // Animated Image Toggle
-          AnimatedOpacity(
-            duration: Duration(milliseconds: 500), // Smooth transition
-            opacity: 1.0,
+          AnimatedSwitcher(
+            duration: Duration(milliseconds: 500),
+            transitionBuilder: (widget, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: widget,
+              );
+            },
             child: Container(
+              key: ValueKey<bool>(_showFirstImage),
               height: 200,
               width: 200,
               decoration: BoxDecoration(
@@ -111,27 +147,34 @@ class _CounterScreenState extends State<CounterScreen> {
           SizedBox(height: 20),
 
           // Toggle Image Button
-          ElevatedButton(
+          ElevatedButton.icon(
             onPressed: _toggleImage,
-            child: Text("Toggle Image"),
+            icon: Icon(Icons.image),
+            label: Text("Toggle Image"),
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              backgroundColor: Colors.orangeAccent,
+            ),
           ),
 
           SizedBox(height: 20),
 
           // Reset Button
-          ElevatedButton(
+          ElevatedButton.icon(
             onPressed: _resetCounterAndImage,
+            icon: Icon(Icons.refresh),
+            label: Text("Reset"),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red, // Make reset button distinct
+              backgroundColor: Colors.redAccent,
               padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
             ),
-            child: Text("Reset", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
         tooltip: 'Increment',
+        backgroundColor: Colors.green,
         child: Icon(Icons.add),
       ),
     );
