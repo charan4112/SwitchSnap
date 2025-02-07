@@ -9,8 +9,13 @@ class SwitchSnapApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'SwitchSnap',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        textTheme: TextTheme(
+          displayLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
+          titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+      ),
       home: HomeScreen(),
     );
   }
@@ -21,31 +26,10 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> {
   int _counter = 0;
   bool _showFirstImage = true;
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  bool _isToggled = false; // Track switch state
 
   // Increment Counter
   void _incrementCounter() {
@@ -54,35 +38,36 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  // Toggle Image with Animation
-  void _toggleImage() {
-    _controller.forward(from: 0);
+  // Toggle Image
+  void _toggleImage(bool value) {
     setState(() {
+      _isToggled = value;
       _showFirstImage = !_showFirstImage;
     });
   }
 
-  // Reset Function
-  void _reset() {
+  // Reset Function with Confirmation Dialog
+  void _resetApp() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Confirm Reset"),
+        title: Text("Reset App?"),
         content: Text("Are you sure you want to reset the counter and image?"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancel"),
+            onPressed: () => Navigator.pop(context), 
+            child: Text("Cancel", style: TextStyle(color: Colors.red))
           ),
           ElevatedButton(
             onPressed: () {
               setState(() {
                 _counter = 0;
                 _showFirstImage = true;
+                _isToggled = false;
               });
               Navigator.pop(context);
             },
-            child: Text("Reset"),
+            child: Text("Confirm"),
           ),
         ],
       ),
@@ -92,70 +77,89 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('SwitchSnap App')),
-      body: Center(
+      appBar: AppBar(
+        title: Text("SwitchSnap", style: Theme.of(context).textTheme.titleLarge),
+        centerTitle: true,
+        backgroundColor: Colors.blueAccent,
+      ),
+      body: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.lightBlueAccent, Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Counter Display
+            // Counter at the top
             Text(
-              "You have pushed the button this many times:",
-              style: TextStyle(fontSize: 18),
+              "Counter: $_counter",
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
             ),
-            Text(
-              '$_counter',
-              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
-            ),
+
             SizedBox(height: 20),
 
-            // Animated Image Toggle
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: Container(
-                key: ValueKey<bool>(_showFirstImage),
-                height: 200,
+            // Image Display
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(
+                _showFirstImage ? "assets/image1.jpg" : "assets/image2.jpg",
                 width: 200,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage(
-                      _showFirstImage
-                          ? 'assets/image1.jpg'
-                          : 'assets/image2.jpg',
-                    ),
-                    fit: BoxFit.cover,
-                  ),
-                ),
+                height: 200,
+                fit: BoxFit.cover,
               ),
             ),
+
             SizedBox(height: 20),
 
-            // Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // Toggle Switch with Label
+            Column(
               children: [
-                FloatingActionButton(
-                  onPressed: _incrementCounter,
-                  tooltip: 'Increment',
-                  child: Icon(Icons.add),
+                Text(
+                  "Image Toggle",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(width: 20),
-                FloatingActionButton(
-                  onPressed: _toggleImage,
-                  tooltip: 'Toggle Image',
-                  child: Icon(Icons.image),
-                ),
-                SizedBox(width: 20),
-                FloatingActionButton(
-                  onPressed: _reset,
-                  tooltip: 'Reset',
-                  backgroundColor: Colors.red,
-                  child: Icon(Icons.refresh),
+                SizedBox(height: 5),
+                Switch(
+                  value: _isToggled,
+                  onChanged: _toggleImage,
+                  activeColor: Colors.blue,
+                  inactiveThumbColor: Colors.grey,
+                  inactiveTrackColor: Colors.grey.shade400,
                 ),
               ],
+            ),
+
+            SizedBox(height: 20),
+
+            // Reset Button - Centered at Bottom
+            Padding(
+              padding: const EdgeInsets.only(top: 30),
+              child: ElevatedButton.icon(
+                onPressed: _resetApp,
+                icon: Icon(Icons.refresh, size: 30),
+                label: Text("Reset", style: TextStyle(fontSize: 20)),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
             ),
           ],
         ),
       ),
+      
+      // Floating Action Button for Increment
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        child: Icon(Icons.add, size: 30),
+        backgroundColor: Colors.blueAccent,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
